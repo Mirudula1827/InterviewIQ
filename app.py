@@ -8,7 +8,7 @@ load_dotenv()
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
 st.set_page_config(page_title="Interview Analyzer", page_icon="🎯")
-st.title("🎯 Interview Analyzer")
+st.title("Interview Analyzer")
 
 # --- Resume Upload ---
 st.header("1. Upload Your Resume")
@@ -59,7 +59,6 @@ if resume_text and jd_input:
         with st.spinner("Analyzing your resume against the job description..."):
             try:
                 data = analyze_match(resume_text, jd_input, GROQ_API_KEY)
-
                 score = data["match_score"]
                 if score >= 75:
                     st.success(f"Match Score: {score}%")
@@ -69,7 +68,9 @@ if resume_text and jd_input:
                     st.error(f"Match Score: {score}%")
 
                 st.progress(score / 100)
-
+                st.caption(
+                f"Matched Skills: {data['score_breakdown']['fraction']}"
+                )
                 col1, col2 = st.columns(2)
                 with col1:
                     st.subheader("✅ Matching Skills")
