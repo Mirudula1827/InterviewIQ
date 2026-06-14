@@ -17,7 +17,7 @@ resume_file = st.file_uploader("Upload resume (PDF)", type=["pdf"], key="resume"
 resume_text = ""
 if resume_file:
     resume_text = extract_resume_text(resume_file)
-    st.success("✅ Resume uploaded!")
+    st.success(" Resume uploaded!")
     with st.expander("View extracted resume text"):
         st.text(resume_text)
 
@@ -26,14 +26,14 @@ st.header("2. Add Job Description")
 jd_input = st.text_area("Paste the job description here", height=200)
 
 if jd_input:
-    st.success("✅ Job description received!")
+    st.success(" Job description received!")
     with st.expander("View job description"):
         st.text(jd_input)
 
 # --- Summary ---
 if resume_text and jd_input:
     st.divider()
-    st.subheader("✅ Ready for next step")
+    st.subheader(" Ready for next step")
     col1, col2 = st.columns(2)
     with col1:
         st.metric("Resume words", len(resume_text.split()))
@@ -73,11 +73,11 @@ if resume_text and jd_input:
                 )
                 col1, col2 = st.columns(2)
                 with col1:
-                    st.subheader("✅ Matching Skills")
+                    st.subheader("Matching Skills")
                     for skill in data["matching_skills"]:
                         st.write(f"• {skill}")
                 with col2:
-                    st.subheader("❌ Missing Skills")
+                    st.subheader(" Missing Skills")
                     for skill in data["missing_skills"]:
                         st.write(f"• {skill}")
 
