@@ -1,12 +1,6 @@
-# services/speech_to_text.py
-
 import os
 import tempfile
 import whisper
-
-# Loaded once when the module is first imported — not per call.
-# Streamlit re-runs the script top-to-bottom on every interaction,
-# so this must be cached or it reloads the model every single time.
 import streamlit as st
 
 ALLOWED_EXTENSIONS = {".wav", ".mp3", ".m4a"}
@@ -58,7 +52,7 @@ def transcribe_audio(uploaded_file) -> dict:
 
     tmp_path = None
     try:
-        # Write upload to a temp file — Whisper needs a file path, not bytes
+       
         ext = os.path.splitext(uploaded_file.name)[1].lower()
         with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as tmp:
             tmp.write(uploaded_file.getvalue())
@@ -87,7 +81,7 @@ def transcribe_audio(uploaded_file) -> dict:
         }
 
     except Exception as e:
-        # Catches ffmpeg-missing errors, corrupt files, decode failures, etc.
+       
         return {
             "success": False,
             "transcript": "",
