@@ -150,7 +150,7 @@ def generate_verdict(score_data: dict, set_data: dict, client: Groq) -> dict:
     """
     prompt = f"""You are a career coach reviewing a resume–job match analysis.
 The numbers below were computed by code — do NOT change them.
-Your job is ONLY to explain and advise in clear, plain English.
+Your job is ONLY to explain and advise in clear, plain English.++++
 
 COMPUTED MATCH DATA (do not alter):
 - Final score: {score_data['final_score']}/100  ({score_data['score_label']})
@@ -163,7 +163,7 @@ Return ONLY valid JSON, no markdown, no preamble:
 {{
     "verdict": "one sentence — what does this score actually mean for the candidate",
     "summary": "2–3 sentences — why this score, which matched skills matter most, which missing ones hurt most",
-    "recommendations": [
+    "recommendations": [ 
         "specific action targeting the most critical missing skill",
         "specific action for the second gap",
         "one quick win the candidate can do this week"
