@@ -1,6 +1,6 @@
 from groq import Groq
 
-def generate_questions(jd_input, api_key):
+def generate_questions(resume_text, jd_input, api_key):
     client = Groq(api_key=api_key)
     
     response = client.chat.completions.create(
@@ -8,12 +8,31 @@ def generate_questions(jd_input, api_key):
         messages=[
             {
                 "role": "user",
-                "content": f"""Based on this job description, generate exactly 8 interview questions.
-                        
+                "content": f"""
+You are an experienced technical interviewer.
+
+Generate exactly 8 realistic interview questions using BOTH the candidate's resume and the job description.
+
+Candidate Resume:
+{resume_text}
+
 Job Description:
 {jd_input}
 
-Return ONLY a numbered list of 8 questions. Nothing else."""
+Question distribution:
+- 2 introductory questions
+- 2 resume-based questions
+- 3 job-description-based questions
+- 1 behavioral question
+
+Rules:
+- Ask only about skills, technologies, projects, and experiences mentioned in the resume or job description.
+- Do NOT ask about technologies that are not mentioned in either document.
+- Questions should feel like a real internship interview.
+- Mix technical and non-technical questions.
+
+Return ONLY a numbered list of 8 questions.
+"""
             }
         ]
     )
