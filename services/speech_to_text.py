@@ -1,7 +1,7 @@
-# services/speech_to_text.py
 import os
 import tempfile
 import whisper
+import streamlit as st
 
 ALLOWED_EXTENSIONS = {".wav", ".mp3", ".m4a"}
 MAX_FILE_SIZE_MB = 25
@@ -32,6 +32,7 @@ def transcribe_audio(filename: str, file_bytes: bytes) -> dict:
 
     tmp_path = None
     try:
+       
         ext = os.path.splitext(filename)[1].lower()
         with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as tmp:
             tmp.write(file_bytes)
@@ -60,6 +61,7 @@ def transcribe_audio(filename: str, file_bytes: bytes) -> dict:
         }
 
     except Exception as e:
+       
         return {
             "success": False,
             "transcript": "",

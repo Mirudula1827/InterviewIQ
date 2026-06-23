@@ -1,24 +1,10 @@
-# match_analyzer.py
-
 import json
 import re
 from groq import Groq
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-
-
-# ─────────────────────────────────────────────
-# STEP 1 & 2 — LLM extracts skills from text
-# Same function used for both resume and JD
-# ─────────────────────────────────────────────
-
+# LLM extracts skills from text
 def extract_skills_via_llm(text: str, client: Groq) -> list[str]:
-    """
-    Ask Groq to pull skills out of any text blob.
-    Returns a list of lowercase strings.
-    LLM does ONE job here: read messy text, find skills.
-    It does NOT score or compare anything.
-    """
     prompt = """Extract all technical and professional skills from the text below.
 
 Rules:
@@ -36,50 +22,36 @@ Text:
     response = client.chat.completions.create(
         model="llama-3.1-8b-instant",
         messages=[{"role": "user", "content": prompt}],
-        temperature=0.0,   # deterministic — same text → same skills every time
+        temperature=0.0,  
     )
 
     raw = response.choices[0].message.content.strip()
 
-    # Strip markdown fences if present (```json ... ```)
     raw = re.sub(r"^```(?:json)?|```$", "", raw, flags=re.MULTILINE).strip()
 
     try:
         skills = json.loads(raw)
-        # Normalise: lowercase, strip whitespace, deduplicate
+
         return list({s.lower().strip() for s in skills if isinstance(s, str)})
     except json.JSONDecodeError:
-        # Fallback: pull anything in quotes
+       
         return [m.lower() for m in re.findall(r'"([^"]+)"', raw)]
-
-
-# ─────────────────────────────────────────────
-# STEP 3 — Python set operations (no AI)
-# Matched / missing computed deterministically
-# ─────────────────────────────────────────────
+        
 
 def compute_set_match(resume_skills: list, jd_skills: list) -> dict:
-    """
-    Pure Python. Same inputs → identical output every single run.
-    """
+
     resume_set = set(resume_skills)
     jd_set     = set(jd_skills)
 
-    matched = sorted(resume_set & jd_set)           # skills in both
-    missing = sorted(jd_set - resume_set)           # JD wants, resume lacks
-    extra   = sorted(resume_set - jd_set)           # bonus skills not in JD
+    matched = sorted(resume_set & jd_set)          
+    missing = sorted(jd_set - resume_set)           
+    extra   = sorted(resume_set - jd_set)         
 
     return {
         "matched": matched,
         "missing": missing,
         "extra":   extra,
     }
-
-
-# ─────────────────────────────────────────────
-# STEP 4 — Semantic similarity (TF-IDF cosine)
-# Catches "ML" vs "machine learning", synonyms
-# ─────────────────────────────────────────────
 
 def compute_semantic_score(resume_skills: list, jd_skills: list) -> float:
     """
@@ -99,55 +71,34 @@ def compute_semantic_score(resume_skills: list, jd_skills: list) -> float:
 
     return round(float(score), 4)
 
-
-# ─────────────────────────────────────────────
-# STEP 5 — Final score (pure math, no AI)
-# Weighted blend: set match 70% + semantic 30%
-# ─────────────────────────────────────────────
-
 def compute_final_score(set_data: dict, jd_skills: list, semantic: float) -> dict:
-    """
-    Combines exact match rate and semantic similarity into one score.
-    Weights are easy to tune — change the numbers, nothing else breaks.
-    """
+   
     total_jd = len(jd_skills)
 
-    # Exact match rate: how many JD skills the resume covers exactly
     exact_rate = len(set_data["matched"]) / total_jd if total_jd > 0 else 0.0
 
-    # Weighted blend
     EXACT_WEIGHT    = 0.70
     SEMANTIC_WEIGHT = 0.30
     raw_score = (exact_rate * EXACT_WEIGHT) + (semantic * SEMANTIC_WEIGHT)
 
-    final = round(raw_score * 100)   # 0–100 integer, same every run
-
-    # Deterministic label — if/elif, never LLM
+    final = round(raw_score * 100)  
     if final >= 80:   label = "Strong match"
     elif final >= 60: label = "Good match"
     elif final >= 40: label = "Partial match"
     else:             label = "Weak match"
 
     return {
-        "final_score":    final,                          # e.g. 74
-        "score_label":    label,                          # e.g. "Good match"
-        "exact_rate_pct": round(exact_rate * 100),        # e.g. 68
-        "semantic_score": round(semantic * 100),          # e.g. 91
-        "fraction":       f"{len(set_data['matched'])}/{total_jd}",  # e.g. "9/13"
+        "final_score":    final,                         
+        "score_label":    label,                         
+        "exact_rate_pct": round(exact_rate * 100),       
+        "semantic_score": round(semantic * 100),         
+        "fraction":       f"{len(set_data['matched'])}/{total_jd}",  
     }
 
 
-# ─────────────────────────────────────────────
-# STEP 6 — LLM verdict (reasoning only)
-# Groq explains the data Python already computed
-# It never sees raw resume/JD — only the diff
-# ─────────────────────────────────────────────
 
 def generate_verdict(score_data: dict, set_data: dict, client: Groq) -> dict:
-    """
-    Groq's ONLY job here: write human-readable reasoning around real numbers.
-    It cannot change the score. It cannot invent skill names.
-    """
+   
     prompt = f"""You are a career coach reviewing a resume–job match analysis.
 The numbers below were computed by code — do NOT change them.
 Your job is ONLY to explain and advise in clear, plain English.++++
@@ -173,7 +124,7 @@ Return ONLY valid JSON, no markdown, no preamble:
     response = client.chat.completions.create(
         model="llama-3.1-8b-instant",
         messages=[{"role": "user", "content": prompt}],
-        temperature=0.3,   # slight creativity for natural language, not for facts
+        temperature=0.3,  
     )
 
     raw = response.choices[0].message.content.strip()
@@ -182,59 +133,35 @@ Return ONLY valid JSON, no markdown, no preamble:
     try:
         return json.loads(raw)
     except json.JSONDecodeError:
-        # Safe fallback — never crash the whole pipeline over formatting
+       
         return {
             "verdict": "Analysis complete.",
             "summary": raw[:300],
             "recommendations": []
         }
 
-
-# ─────────────────────────────────────────────
-# PUBLIC FUNCTION — drop-in replacement for
-# your existing analyze_match()
-# ─────────────────────────────────────────────
-
 def analyze_match(resume_text: str, jd_input: str, api_key: str) -> dict:
-    """
-    Pipeline:
-    Resume text  ──┐
-                   ├─ LLM extracts skills
-    JD text      ──┘
-                   │
-                   ├─ Python set ops  (matched / missing)
-                   ├─ TF-IDF cosine   (semantic similarity)
-                   ├─ Weighted blend  (final score — deterministic)
-                   └─ LLM verdict     (explains the computed data)
-    """
+   
     client = Groq(api_key=api_key)
 
-    # Steps 1 & 2: extract skills (LLM reads messy text)
+   
     resume_skills = extract_skills_via_llm(resume_text, client)
     jd_skills     = extract_skills_via_llm(jd_input,   client)
 
-    # Step 3: exact match (Python set ops)
     set_data = compute_set_match(resume_skills, jd_skills)
 
-    # Step 4: semantic similarity (TF-IDF)
     semantic = compute_semantic_score(resume_skills, jd_skills)
 
-    # Step 5: final score (weighted math)
     score_data = compute_final_score(set_data, jd_skills, semantic)
 
-    # Step 6: verdict (LLM explains, never recalculates)
     verdict_data = generate_verdict(score_data, set_data, client)
 
-    # Assemble final response — same shape your old code returned
-    # plus richer breakdown data
     return {
-        # Core fields (same keys as before — nothing breaks downstream)
         "match_score":      score_data["final_score"],
         "matching_skills":  set_data["matched"],
         "missing_skills":   set_data["missing"],
         "verdict":          verdict_data["verdict"],
 
-        # New fields
         "summary":          verdict_data["summary"],
         "recommendations":  verdict_data["recommendations"],
         "score_label":      score_data["score_label"],
