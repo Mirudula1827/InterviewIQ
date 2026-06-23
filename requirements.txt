@@ -1,0 +1,9 @@
+# requirements.txt
+fastapi
+uvicorn[standard]
+python-multipart
+pdfplumber
+groq
+openai-whisper
+scikit-learn
+python-dotenv
