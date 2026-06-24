@@ -1,7 +1,7 @@
 import os
 import tempfile
 import whisper
-import streamlit as st
+
 
 ALLOWED_EXTENSIONS = {".wav", ".mp3", ".m4a"}
 MAX_FILE_SIZE_MB = 25
