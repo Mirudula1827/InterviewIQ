@@ -1,12 +1,12 @@
-import { ListChecks, Loader2 } from "lucide-react"
-import QuestionCard from "./QuestionCard"
+import { ListChecks, Loader2 } from "lucide-react";
+import QuestionCard from "./QuestionCard";
 
 export default function QuestionList({ questions, loading }) {
   // TODO: Connect to POST /api/questions/generate
   return (
     <section className="rounded-xl border border-border bg-surface p-5 sm:p-6">
       <div className="mb-4 flex items-center gap-2">
-        <ListChecks size={18} className="text-[var(--color-accent)]" />
+        <ListChecks size={18} className="text-(--color-accent)" />
         <h2 className="text-sm font-semibold tracking-tight text-foreground">
           Generated Interview Questions
         </h2>
@@ -19,7 +19,7 @@ export default function QuestionList({ questions, loading }) {
 
       {loading ? (
         <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border bg-background py-12 text-center">
-          <Loader2 size={22} className="animate-spin text-[var(--color-accent)]" />
+          <Loader2 size={22} className="animate-spin text-(--color-accent)" />
           <p className="text-sm text-muted">Generating tailored questions…</p>
         </div>
       ) : questions.length === 0 ? (
@@ -40,5 +40,5 @@ export default function QuestionList({ questions, loading }) {
         </div>
       )}
     </section>
-  )
+  );
 }

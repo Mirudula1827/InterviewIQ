@@ -4,13 +4,13 @@ import {
   AlertTriangle,
   Sparkles,
   Lightbulb,
-} from "lucide-react"
-import SkillTag from "./SkillTag"
+} from "lucide-react";
+import SkillTag from "./SkillTag";
 
 function ScoreRing({ score }) {
-  const radius = 52
-  const circumference = 2 * Math.PI * radius
-  const offset = circumference - (score / 100) * circumference
+  const radius = 52;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (score / 100) * circumference;
 
   return (
     <div className="relative flex h-32 w-32 items-center justify-center">
@@ -43,7 +43,7 @@ function ScoreRing({ score }) {
         <span className="text-xs text-faint">Match</span>
       </div>
     </div>
-  )
+  );
 }
 
 function StatCard({ icon: Icon, label, value, tone }) {
@@ -51,7 +51,7 @@ function StatCard({ icon: Icon, label, value, tone }) {
     accent: "text-[var(--color-accent)]",
     emerald: "text-emerald-400",
     amber: "text-amber-400",
-  }
+  };
   return (
     <div className="rounded-xl border border-border bg-background p-4">
       <div className="flex items-center gap-2 text-xs text-faint">
@@ -62,23 +62,22 @@ function StatCard({ icon: Icon, label, value, tone }) {
         {value}
       </p>
     </div>
-  )
+  );
 }
 
 export default function MatchAnalysisCard({ analysis }) {
-  // TODO: Connect to POST /api/match/analyze
   const {
-    score,
-    matchingSkills,
-    missingSkills,
-    verdict,
-    recommendations,
-  } = analysis
+    score = 0,
+    matchingSkills = [],
+    missingSkills = [],
+    verdict = "",
+    recommendations = [],
+  } = analysis || {};
 
   return (
     <section className="rounded-xl border border-border bg-surface p-5 sm:p-6">
       <div className="mb-5 flex items-center gap-2">
-        <Gauge size={18} className="text-[var(--color-accent)]" />
+        <Gauge size={18} className="text-(--color-accent)" />
         <h2 className="text-sm font-semibold tracking-tight text-foreground">
           Resume Match Analysis
         </h2>
@@ -133,8 +132,8 @@ export default function MatchAnalysisCard({ analysis }) {
         </div>
       </div>
 
-      <div className="mt-6 rounded-xl border border-[var(--color-accent)]/20 bg-[var(--color-accent-soft)] p-4">
-        <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[var(--color-accent)]">
+      <div className="mt-6 rounded-xl border border-(--color-accent)/20 bg-(--color-accent-soft) p-4">
+        <h3 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-(--color-accent)">
           <Sparkles size={13} />
           AI Verdict
         </h3>
@@ -145,7 +144,7 @@ export default function MatchAnalysisCard({ analysis }) {
 
       <div className="mt-4">
         <h3 className="mb-2.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-faint">
-          <Lightbulb size={13} className="text-[var(--color-accent)]" />
+          <Lightbulb size={13} className="text-(--color-accent)" />
           Recommendations
         </h3>
         <ul className="space-y-2">
@@ -154,12 +153,12 @@ export default function MatchAnalysisCard({ analysis }) {
               key={rec}
               className="flex items-start gap-2.5 text-sm leading-relaxed text-muted"
             >
-              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--color-accent)]" />
+              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-(--color-accent)" />
               <span className="text-pretty">{rec}</span>
             </li>
           ))}
         </ul>
       </div>
     </section>
-  )
+  );
 }
