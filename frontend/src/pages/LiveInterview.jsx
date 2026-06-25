@@ -177,12 +177,9 @@ export default function LiveInterview() {
   const textareaRef = useRef(null);
   const MAX_QUESTIONS = 8;
 
-  // ── Start session on mount
   useEffect(() => {
     startSession();
   }, []);
-
-  // ── Auto-focus textarea when asking
   useEffect(() => {
     if (phase === PHASE.ASKING && textareaRef.current) {
       textareaRef.current.focus();
@@ -190,9 +187,21 @@ export default function LiveInterview() {
   }, [phase, question]);
 
   async function startSession() {
+    const preStartedSessionId = localStorage.getItem("interview_session_id");
+    const preStartedQuestion = localStorage.getItem("interview_first_question");
+
+    if (preStartedSessionId && preStartedQuestion) {
+      setSessionId(preStartedSessionId);
+      setQuestion(preStartedQuestion);
+      setQuestionNumber(1);
+      setPhase(PHASE.ASKING);
+      localStorage.removeItem("interview_session_id");
+      localStorage.removeItem("interview_first_question");
+      return;
+    }
+
     setPhase(PHASE.LOADING);
 
-    // Read resume + JD saved during NewInterview step
     const resumeText = localStorage.getItem("resume_text");
     const jdText = localStorage.getItem("jd_text");
 

@@ -1,4 +1,11 @@
-import { Rocket, RefreshCw, Gauge, ListChecks, FileCheck2 } from "lucide-react";
+import {
+  Rocket,
+  RefreshCw,
+  Gauge,
+  ListChecks,
+  FileCheck2,
+  Loader2,
+} from "lucide-react";
 
 function Recap({ icon: Icon, label, value }) {
   return (
@@ -22,6 +29,9 @@ export default function InterviewReadinessCard({
   resumeReady,
   onRegenerate,
   onStart,
+  loadingStart,
+  loadingRegenerate,
+  analysisCompleted,
 }) {
   return (
     <section className="overflow-hidden rounded-xl border border-(--color-accent)/25 bg-surface">
@@ -44,7 +54,9 @@ export default function InterviewReadinessCard({
           <Recap
             icon={ListChecks}
             label="Questions"
-            value={`${questionCount} prepared`}
+            value={
+              loadingRegenerate ? "Generating..." : `${questionCount} prepared`
+            }
           />
           <Recap
             icon={FileCheck2}
@@ -57,18 +69,38 @@ export default function InterviewReadinessCard({
           <button
             type="button"
             onClick={onStart}
-            className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-(--color-accent) px-4 py-3 text-sm font-semibold text-white outline-none transition-colors hover:bg-(--color-accent-hover) focus-visible:ring-2 focus-visible:ring-(--color-accent) focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            disabled={!analysisCompleted || loadingStart || loadingRegenerate}
+            className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-(--color-accent) px-4 py-3 text-sm font-semibold text-white outline-none transition-colors hover:bg-(--color-accent-hover) focus-visible:ring-2 focus-visible:ring-(--color-accent) focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Rocket size={16} />
-            Start Adaptive Interview
+            {loadingStart ? (
+              <>
+                <Loader2 size={16} className="animate-spin" />
+                Starting Interview...
+              </>
+            ) : (
+              <>
+                <Rocket size={16} />
+                Start Adaptive Interview
+              </>
+            )}
           </button>
           <button
             type="button"
             onClick={onRegenerate}
-            className="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-surface px-4 py-3 text-sm font-semibold text-muted outline-none transition-colors hover:bg-surface-hover hover:text-foreground focus-visible:ring-2 focus-visible:ring-(--color-accent)"
+            disabled={!analysisCompleted || loadingRegenerate || loadingStart}
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-surface px-4 py-3 text-sm font-semibold text-muted outline-none transition-colors hover:bg-surface-hover hover:text-foreground focus-visible:ring-2 focus-visible:ring-(--color-accent) disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <RefreshCw size={16} />
-            Regenerate Questions
+            {loadingRegenerate ? (
+              <>
+                <Loader2 size={16} className="animate-spin" />
+                Regenerating...
+              </>
+            ) : (
+              <>
+                <RefreshCw size={16} />
+                Regenerate Questions
+              </>
+            )}
           </button>
         </div>
       </div>

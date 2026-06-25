@@ -3,7 +3,6 @@ import uuid
 from groq import Groq
 import re
 
-# Temporary in-memory storage
 INTERVIEW_SESSIONS = {}
 MAX_QUESTIONS = 8
 
@@ -69,8 +68,7 @@ def evaluate_answer(session_id, answer, api_key):
 
     client = Groq(api_key=api_key)
 
-    # Note: Double curly braces {{ and }} are used for the JSON schema 
-    # to prevent Python f-string parser from failing with ValueError.
+    # Note the double curly braces {{ and }} around the JSON schema structure.
     response = client.chat.completions.create(
         model="llama-3.1-8b-instant",
         response_format={"type": "json_object"},
@@ -134,7 +132,7 @@ The JSON schema is:
     print(content)
     print("========================\n")
 
-    # Remove markdown codeblocks if the model accidentally wraps the JSON
+    # Remove markdown codeblock wrapper if the model still outputs it
     content = re.sub(r"^```(?:json)?", "", content)
     content = re.sub(r"```$", "", content).strip()
 
@@ -143,43 +141,38 @@ The JSON schema is:
     except json.JSONDecodeError:
         raise ValueError(f"Groq did not return valid JSON:\n{content}")
 
-    # Robust parsing of JSON keys to ensure types are correct and keys exist
+    # Robust parsing of JSON keys
     try:
         score_val = result.get("score", 0)
         if isinstance(score_val, str):
-            # Extract numbers if it is string format, e.g. "8/10" -> 8
             match = re.search(r'\d+', score_val)
             score = int(match.group()) if match else 0
         else:
             score = int(score_val)
     except Exception:
-        score = 5  # fallback score
+        score = 5
 
-    # Clean and validate strengths array
     strengths = result.get("strengths", [])
     if isinstance(strengths, str):
         strengths = [strengths]
     elif not isinstance(strengths, list):
         strengths = []
 
-    # Clean and validate weaknesses array
     weaknesses = result.get("weaknesses", [])
     if isinstance(weaknesses, str):
         weaknesses = [weaknesses]
     elif not isinstance(weaknesses, list):
         weaknesses = []
 
-    # Clean and validate suggestion string
     suggestion = result.get("suggestion", "")
     if not isinstance(suggestion, str):
         suggestion = str(suggestion)
 
-    # Clean and validate next_question string
     next_question = result.get("next_question", "")
     if not isinstance(next_question, str):
         next_question = str(next_question)
 
-    # Store current response data in session history
+    # Store current response data
     session["history"].append(
         {"question": current_question, "answer": answer, "score": score}
     )

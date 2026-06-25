@@ -3,6 +3,8 @@ import re
 from groq import Groq
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+from concurrent.futures import ThreadPoolExecutor
+
 # LLM extracts skills from text
 def extract_skills_via_llm(text: str, client: Groq) -> list[str]:
     prompt = """Extract all technical and professional skills from the text below.
@@ -144,9 +146,11 @@ def analyze_match(resume_text: str, jd_input: str, api_key: str) -> dict:
    
     client = Groq(api_key=api_key)
 
-   
-    resume_skills = extract_skills_via_llm(resume_text, client)
-    jd_skills     = extract_skills_via_llm(jd_input,   client)
+    with ThreadPoolExecutor(max_workers=2) as executor:
+     future_resume = executor.submit(extract_skills_via_llm, resume_text, client)
+     future_jd = executor.submit(extract_skills_via_llm, jd_input, client)
+     resume_skills = future_resume.result()
+     jd_skills = future_jd.result()
 
     set_data = compute_set_match(resume_skills, jd_skills)
 
