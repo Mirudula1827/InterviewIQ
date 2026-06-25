@@ -20,7 +20,10 @@ export default function JobDescriptionInput({ value, onChange }) {
       <textarea
         value={value}
         maxLength={MAX_CHARS}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => {
+          onChange(e.target.value);
+          localStorage.setItem("jd_text", e.target.value);
+        }}
         placeholder="Paste the full job description here…"
         rows={9}
         className="w-full resize-y rounded-xl border border-border bg-background p-4 text-sm leading-relaxed text-foreground outline-none transition-colors placeholder:text-faint hover:border-(--color-faint) focus:border-(--color-accent) focus:ring-2 focus:ring-(--color-accent-soft)"

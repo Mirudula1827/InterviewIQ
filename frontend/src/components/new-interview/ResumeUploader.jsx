@@ -34,7 +34,7 @@ export default function ResumeUploader({ onResumeParsed }) {
       setResumeText(response.data.resume_text);
 
       onResumeParsed?.(response.data.resume_text);
-
+      localStorage.setItem("resume_text", response.data.resume_text);
       setProgress(100);
       setStatus("success");
     } catch (error) {

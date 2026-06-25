@@ -23,7 +23,6 @@ export default function InterviewReadinessCard({
   onRegenerate,
   onStart,
 }) {
-  // TODO: Connect to POST /api/interview/start
   return (
     <section className="overflow-hidden rounded-xl border border-(--color-accent)/25 bg-surface">
       <div className="border-b border-border bg-(--color-accent-soft) px-5 py-4 sm:px-6">
