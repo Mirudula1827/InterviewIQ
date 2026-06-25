@@ -9,40 +9,70 @@ import InterviewReadinessCard from "../components/new-interview/InterviewReadine
 import api from "../lib/api";
 export default function NewInterview() {
   const [jobDescription, setJobDescription] = useState("");
-
   const [analysis, setAnalysis] = useState(null);
-
   const [loadingAnalysis, setLoadingAnalysis] = useState(false);
 
-  const [regenerating, setRegenerating] = useState(false);
   const [resumeText, setResumeText] = useState("");
-  const MOCK_QUESTIONS = [
-    "Walk me through how you would approach cleaning and preparing a large, messy dataset before modeling.",
-    "Describe a machine learning project where you used Scikit-learn. What model did you choose and why?",
-    "How do you evaluate whether a predictive model is performing well beyond accuracy alone?",
-    "You mentioned strong Python skills — how would you optimize a slow Pandas operation on a large DataFrame?",
-    "This role involves Docker and AWS, which aren't on your resume. How would you ramp up on deploying models to the cloud?",
-  ];
-  const [questions] = useState(MOCK_QUESTIONS);
+  const [questions, setQuestions] = useState([]);
+  const [loadingQuestions, setLoadingQuestions] = useState(false);
+  const [sessionId, setSessionId] = useState("");
+  const [firstQuestion, setFirstQuestion] = useState("");
+  async function handleGenerateQuestions() {
+    if (!resumeText || !jobDescription) return;
+
+    try {
+      setLoadingQuestions(true);
+
+      const response = await api.post("/questions/generate", {
+        resume_text: resumeText,
+        jd_text: jobDescription,
+      });
+
+      setQuestions(response.data.questions || []);
+
+      console.log(response.data);
+    } catch (error) {
+      console.error(error);
+      alert("Question generation failed");
+    } finally {
+      setLoadingQuestions(false);
+    }
+  }
+  async function handleStartInterview() {
+    if (!analysis) {
+      alert("Analyze your resume first.");
+      return;
+    }
+
+    try {
+      const response = await api.post("/interview/start", {
+        resume_text: resumeText,
+        jd_text: jobDescription,
+      });
+
+      setSessionId(response.data.session_id);
+      setFirstQuestion(response.data.question);
+
+      console.log(response.data);
+    } catch (error) {
+      console.error(error);
+      alert("Failed to start interview");
+    }
+  }
   function handleRegenerate() {
-    // TODO: Connect to POST /api/questions/generate
-    setRegenerating(true);
-    setTimeout(() => setRegenerating(false), 1200);
+    handleGenerateQuestions();
   }
   async function handleAnalyze() {
     if (!resumeText || !jobDescription) {
       alert("Upload resume and enter JD first");
       return;
     }
-
     try {
       setLoadingAnalysis(true);
-
       const response = await api.post("/match/analyze", {
         resume_text: resumeText,
         jd_text: jobDescription,
       });
-      console.log(response.data);
 
       setAnalysis({
         score: response.data.match_score,
@@ -51,9 +81,10 @@ export default function NewInterview() {
         verdict: response.data.verdict || "",
         recommendations: response.data.recommendations || [],
       });
+
+      await handleGenerateQuestions();
     } catch (error) {
       console.error(error);
-
       alert("Analysis failed");
     } finally {
       setLoadingAnalysis(false);
@@ -100,7 +131,7 @@ export default function NewInterview() {
       </div>
 
       <div className="mt-6">
-        <QuestionList questions={questions} loading={regenerating} />
+        <QuestionList questions={questions} loading={loadingQuestions} />
       </div>
 
       <div className="mt-6">
@@ -109,6 +140,7 @@ export default function NewInterview() {
           questionCount={questions.length}
           resumeReady
           onRegenerate={handleRegenerate}
+          onStart={handleStartInterview}
         />
       </div>
     </PageContainer>

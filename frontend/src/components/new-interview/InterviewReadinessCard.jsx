@@ -21,6 +21,7 @@ export default function InterviewReadinessCard({
   questionCount,
   resumeReady,
   onRegenerate,
+  onStart,
 }) {
   // TODO: Connect to POST /api/interview/start
   return (
@@ -56,6 +57,7 @@ export default function InterviewReadinessCard({
         <div className="mt-5 flex flex-col gap-3 sm:flex-row">
           <button
             type="button"
+            onClick={onStart}
             className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-(--color-accent) px-4 py-3 text-sm font-semibold text-white outline-none transition-colors hover:bg-(--color-accent-hover) focus-visible:ring-2 focus-visible:ring-(--color-accent) focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             <Rocket size={16} />
