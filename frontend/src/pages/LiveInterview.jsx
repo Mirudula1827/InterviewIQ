@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import PageContainer from "../components/layout/PageContainer";
 import api from "../lib/api";
+import AudioRecorder from "../components/AudioRecorder";
 
 // ── Metric row ────────────────────────────────────────────────────────────────
 function MetricRow({ label, score, note }) {
@@ -381,9 +382,17 @@ export default function LiveInterview() {
             className="w-full resize-none bg-transparent text-sm text-foreground placeholder:text-faint outline-none leading-relaxed disabled:opacity-50"
           />
           <div className="flex items-center justify-between pt-1 border-t border-border">
-            <span className="text-xs text-faint">
-              {answer.trim().split(/\s+/).filter(Boolean).length} words
-            </span>
+            <div className="flex items-center gap-4">
+              <span className="text-xs text-faint">
+                {answer.trim().split(/\s+/).filter(Boolean).length} words
+              </span>
+              <AudioRecorder
+                onTranscriptionComplete={(text) => {
+                  setAnswer((prev) => (prev ? prev + " " + text : text));
+                }}
+                disabled={phase === PHASE.EVALUATING}
+              />
+            </div>
             <button
               onClick={handleSubmitAnswer}
               disabled={!answer.trim() || phase === PHASE.EVALUATING}

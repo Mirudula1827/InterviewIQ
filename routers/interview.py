@@ -1,7 +1,8 @@
 import os
-from fastapi import APIRouter ,HTTPException
+from fastapi import APIRouter, HTTPException, UploadFile, File
 from pydantic import BaseModel
 from services.interview_engine import evaluate_answer, start_interview
+from services.speech_to_text import transcribe_audio
 
 router = APIRouter()
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
@@ -25,3 +26,12 @@ async def start(req: StartInterviewRequest):
 @router.post("/answer")
 async def answer(req: AnswerRequest):
     return evaluate_answer(req.session_id, req.answer, GROQ_API_KEY)
+
+
+@router.post("/transcribe")
+async def transcribe(file: UploadFile = File(...)):
+    contents = await file.read()
+    res = transcribe_audio(file.filename, contents)
+    if not res.get("success"):
+        raise HTTPException(status_code=400, detail=res.get("error", "Transcription failed"))
+    return {"transcript": res.get("transcript")}

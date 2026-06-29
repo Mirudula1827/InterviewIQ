@@ -3,7 +3,7 @@ import tempfile
 import whisper
 
 
-ALLOWED_EXTENSIONS = {".wav", ".mp3", ".m4a"}
+ALLOWED_EXTENSIONS = {".wav", ".mp3", ".m4a", ".webm", ".ogg", ".mp4", ".mpeg", ".opus", ".bin", ""}
 MAX_FILE_SIZE_MB = 25
 
 _model = None
@@ -17,7 +17,7 @@ def get_whisper_model():
 def validate_audio_file(filename: str, size_bytes: int) -> tuple[bool, str]:
     ext = os.path.splitext(filename)[1].lower()
     if ext not in ALLOWED_EXTENSIONS:
-        return False, f"Unsupported file type '{ext}'. Use .wav, .mp3, or .m4a."
+        return False, f"Unsupported file type '{ext}'. Use standard formats like .webm, .wav, .mp3, or .m4a."
 
     size_mb = size_bytes / (1024 * 1024)
     if size_mb > MAX_FILE_SIZE_MB:
@@ -34,6 +34,8 @@ def transcribe_audio(filename: str, file_bytes: bytes) -> dict:
     try:
        
         ext = os.path.splitext(filename)[1].lower()
+        if ext not in {".wav", ".mp3", ".m4a", ".webm", ".ogg", ".mp4", ".mpeg", ".opus"}:
+            ext = ".webm"
         with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as tmp:
             tmp.write(file_bytes)
             tmp_path = tmp.name
