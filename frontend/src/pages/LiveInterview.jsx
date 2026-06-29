@@ -12,6 +12,7 @@ import {
 import PageContainer from "../components/layout/PageContainer";
 import api from "../lib/api";
 import AudioRecorder from "../components/AudioRecorder";
+import { useSpeechSynthesis } from "../hooks/useSpeechSynthesis";
 
 // ── Metric row ────────────────────────────────────────────────────────────────
 function MetricRow({ label, score, note }) {
@@ -205,6 +206,7 @@ export default function LiveInterview() {
   const [errorMsg, setErrorMsg] = useState("");
   const textareaRef = useRef(null);
   const MAX_QUESTIONS = 8;
+  const { speak, cancel, isSpeaking } = useSpeechSynthesis();
 
   useEffect(() => {
     startSession();
@@ -215,6 +217,13 @@ export default function LiveInterview() {
       textareaRef.current.focus();
     }
   }, [phase, question]);
+
+  useEffect(() => {
+    if (question && phase === PHASE.ASKING) {
+      speak(question);
+    }
+    return () => cancel();
+  }, [question, phase, speak, cancel]);
 
   async function startSession() {
     setPhase(PHASE.LOADING);
@@ -359,10 +368,20 @@ export default function LiveInterview() {
       <div className="space-y-4">
         {/* AI question */}
         <div className="rounded-xl border border-purple-500/20 bg-surface p-5 sm:p-6">
-          <div className="mb-3">
+          <div className="mb-3 flex items-center justify-between">
             <span className="rounded-full bg-purple-500/10 border border-purple-500/20 px-2.5 py-0.5 text-xs font-medium text-purple-400">
               Q{questionNumber} of {MAX_QUESTIONS}
             </span>
+            {isSpeaking && (
+              <span className="flex items-center gap-1.5 text-xs text-purple-400 font-medium animate-pulse">
+                <span className="flex gap-0.5 items-center justify-center h-3">
+                  <span className="w-0.5 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: "0.1s" }} />
+                  <span className="w-0.5 h-3 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }} />
+                  <span className="w-0.5 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: "0.3s" }} />
+                </span>
+                AI is speaking...
+              </span>
+            )}
           </div>
           <p className="text-base leading-relaxed text-foreground">
             {question}
@@ -390,7 +409,7 @@ export default function LiveInterview() {
                 onTranscriptionComplete={(text) => {
                   setAnswer((prev) => (prev ? prev + " " + text : text));
                 }}
-                disabled={phase === PHASE.EVALUATING}
+                disabled={phase === PHASE.EVALUATING || isSpeaking}
               />
             </div>
             <button
