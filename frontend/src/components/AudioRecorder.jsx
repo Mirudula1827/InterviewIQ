@@ -2,7 +2,13 @@ import { useState, useRef, useEffect } from "react";
 import { Mic, Square, Loader2, AlertCircle } from "lucide-react";
 import api from "../lib/api";
 
-export default function AudioRecorder({ onTranscriptionComplete, disabled }) {
+export default function AudioRecorder({
+  onTranscriptionComplete,
+  onTranscriptionError,
+  onStateChange,
+  autoStart,
+  disabled,
+}) {
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [duration, setDuration] = useState(0);
@@ -13,7 +19,20 @@ export default function AudioRecorder({ onTranscriptionComplete, disabled }) {
   const chunksRef = useRef([]);
   const timerRef = useRef(null);
 
-  // Clear timer and streams on unmount
+  // Web Audio refs for silence detection
+  const audioContextRef = useRef(null);
+  const analyserRef = useRef(null);
+  const animationFrameRef = useRef(null);
+  const recordingActiveRef = useRef(false);
+
+  // Handle auto-starting recording
+  useEffect(() => {
+    if (autoStart && !isRecording && !isTranscribing && !disabled) {
+      startRecording();
+    }
+  }, [autoStart]);
+
+  // Clean up on component unmount
   useEffect(() => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
@@ -22,9 +41,18 @@ export default function AudioRecorder({ onTranscriptionComplete, disabled }) {
   }, []);
 
   const stopTracks = () => {
+    recordingActiveRef.current = false;
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
+    }
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+    if (audioContextRef.current && audioContextRef.current.state !== "closed") {
+      audioContextRef.current.close();
+      audioContextRef.current = null;
     }
   };
 
@@ -56,7 +84,10 @@ export default function AudioRecorder({ onTranscriptionComplete, disabled }) {
       mediaRecorder.onstop = async () => {
         stopTracks();
         if (chunksRef.current.length === 0) {
-          setError("No audio data recorded.");
+          const errMsg = "No audio data recorded.";
+          setError(errMsg);
+          if (onTranscriptionError) onTranscriptionError(errMsg);
+          if (onStateChange) onStateChange("idle");
           return;
         }
 
@@ -65,29 +96,104 @@ export default function AudioRecorder({ onTranscriptionComplete, disabled }) {
         const audioBlob = new Blob(chunksRef.current, { type: mimeType });
 
         if (audioBlob.size === 0) {
-          setError("Audio recording was empty.");
+          const errMsg = "Audio recording was empty.";
+          setError(errMsg);
+          if (onTranscriptionError) onTranscriptionError(errMsg);
+          if (onStateChange) onStateChange("idle");
           return;
         }
 
         await sendAudioToBackend(audioBlob, extension);
       };
 
-      // Start recording and collect chunks every 250ms
+      // Set VAD (Voice Activity Detection) parameters
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      const audioContext = new AudioContext();
+      audioContextRef.current = audioContext;
+      const source = audioContext.createMediaStreamSource(stream);
+      const analyser = audioContext.createAnalyser();
+      analyser.fftSize = 256;
+      source.connect(analyser);
+      analyserRef.current = analyser;
+
+      const bufferLength = analyser.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
+
+      let lastSpeechTime = Date.now();
+      let hasSpoken = false;
+      const silenceDuration = 2500; // Stop after 2.5 seconds of silence
+      const initialSpeechTimeout = 10000; // Timeout after 10 seconds if no speaking starts
+      const startTime = Date.now();
+
+      recordingActiveRef.current = true;
+
+      const checkAudio = () => {
+        if (!recordingActiveRef.current) return;
+
+        analyser.getByteFrequencyData(dataArray);
+
+        let sum = 0;
+        for (let i = 0; i < bufferLength; i++) {
+          sum += dataArray[i];
+        }
+        const averageVolume = sum / bufferLength;
+
+        // Threshold of volume representing active speaking
+        const threshold = 12;
+
+        if (averageVolume > threshold) {
+          hasSpoken = true;
+          lastSpeechTime = Date.now();
+        }
+
+        const now = Date.now();
+        if (!hasSpoken) {
+          // Trigger timeout if candidate remains completely silent for 10 seconds
+          if (now - startTime > initialSpeechTimeout) {
+            console.warn("Silence timeout: Candidate did not start speaking.");
+            stopTracks();
+            if (mediaRecorder.state !== "inactive") {
+              mediaRecorder.stop();
+            }
+            setIsRecording(false);
+            const errMsg = "No speech detected. Please speak into your microphone.";
+            setError(errMsg);
+            if (onTranscriptionError) onTranscriptionError(errMsg);
+            if (onStateChange) onStateChange("idle");
+            return;
+          }
+        } else {
+          // If speech is detected, stop recording 2.5s after they finish talking
+          if (now - lastSpeechTime > silenceDuration) {
+            console.log("Silence VAD: Automatically stopping recording.");
+            stopRecording();
+            return;
+          }
+        }
+
+        animationFrameRef.current = requestAnimationFrame(checkAudio);
+      };
+
       mediaRecorder.start(250);
       setIsRecording(true);
+      if (onStateChange) onStateChange("listening");
       setDuration(0);
 
       timerRef.current = setInterval(() => {
         setDuration((prev) => prev + 1);
       }, 1000);
 
+      animationFrameRef.current = requestAnimationFrame(checkAudio);
+
     } catch (err) {
       console.error("Microphone access error:", err);
+      let errMsg = "Could not access microphone.";
       if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
-        setError("Microphone permission denied.");
-      } else {
-        setError("Could not access microphone.");
+        errMsg = "Microphone permission denied.";
       }
+      setError(errMsg);
+      if (onTranscriptionError) onTranscriptionError(errMsg);
+      if (onStateChange) onStateChange("idle");
     }
   };
 
@@ -96,6 +202,7 @@ export default function AudioRecorder({ onTranscriptionComplete, disabled }) {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
+    recordingActiveRef.current = false;
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
       mediaRecorderRef.current.stop();
     }
@@ -104,6 +211,7 @@ export default function AudioRecorder({ onTranscriptionComplete, disabled }) {
 
   const sendAudioToBackend = async (blob, extension) => {
     setIsTranscribing(true);
+    if (onStateChange) onStateChange("transcribing");
     setError("");
     try {
       const formData = new FormData();
@@ -118,14 +226,18 @@ export default function AudioRecorder({ onTranscriptionComplete, disabled }) {
       if (response.data && response.data.transcript) {
         onTranscriptionComplete(response.data.transcript);
       } else {
-        setError("No transcription returned from server.");
+        const errMsg = "No transcription returned from server.";
+        setError(errMsg);
+        if (onTranscriptionError) onTranscriptionError(errMsg);
       }
     } catch (err) {
       console.error("Transcription error:", err);
       const errMsg = err.response?.data?.detail || "Failed to transcribe audio.";
       setError(errMsg);
+      if (onTranscriptionError) onTranscriptionError(errMsg);
     } finally {
       setIsTranscribing(false);
+      if (onStateChange) onStateChange("idle");
     }
   };
 

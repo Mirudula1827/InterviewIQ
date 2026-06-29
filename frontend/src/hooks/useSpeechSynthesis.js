@@ -18,7 +18,7 @@ export function useSpeechSynthesis() {
     }
   }, []);
 
-  const speak = useCallback((text) => {
+  const speak = useCallback((text, onEndCallback) => {
     if (typeof window === "undefined" || !window.speechSynthesis) return;
 
     // Cancel any active speech
@@ -46,6 +46,9 @@ export function useSpeechSynthesis() {
     const handleEnd = () => {
       setIsSpeaking(false);
       utteranceRef.current = null;
+      if (onEndCallback) {
+        onEndCallback();
+      }
     };
 
     utterance.onend = handleEnd;

@@ -208,6 +208,10 @@ export default function LiveInterview() {
   const MAX_QUESTIONS = 8;
   const { speak, cancel, isSpeaking } = useSpeechSynthesis();
 
+  const [isHandsFree, setIsHandsFree] = useState(true);
+  const [shouldAutoRecord, setShouldAutoRecord] = useState(false);
+  const [recorderState, setRecorderState] = useState("idle");
+
   useEffect(() => {
     startSession();
   }, []);
@@ -220,10 +224,17 @@ export default function LiveInterview() {
 
   useEffect(() => {
     if (question && phase === PHASE.ASKING) {
-      speak(question);
+      if (isHandsFree) {
+        setShouldAutoRecord(false);
+        speak(question, () => {
+          setShouldAutoRecord(true);
+        });
+      } else {
+        speak(question);
+      }
     }
     return () => cancel();
-  }, [question, phase, speak, cancel]);
+  }, [question, phase, speak, cancel, isHandsFree]);
 
   async function startSession() {
     setPhase(PHASE.LOADING);
@@ -267,14 +278,15 @@ export default function LiveInterview() {
     }
   }
 
-  async function handleSubmitAnswer() {
-    if (!answer.trim()) return;
+  async function handleSubmitAnswer(overrideAnswer = "") {
+    const answerToSubmit = overrideAnswer || answer;
+    if (!answerToSubmit.trim()) return;
     setPhase(PHASE.EVALUATING);
 
     try {
       const res = await api.post("/interview/answer", {
         session_id: sessionId,
-        answer: answer.trim(),
+        answer: answerToSubmit.trim(),
       });
       const data = res.data;
       setAnswer("");
@@ -365,71 +377,196 @@ export default function LiveInterview() {
         <ProgressDots current={questionNumber - 1} total={MAX_QUESTIONS} />
       </header>
 
-      <div className="space-y-4">
-        {/* AI question */}
-        <div className="rounded-xl border border-purple-500/20 bg-surface p-5 sm:p-6">
-          <div className="mb-3 flex items-center justify-between">
-            <span className="rounded-full bg-purple-500/10 border border-purple-500/20 px-2.5 py-0.5 text-xs font-medium text-purple-400">
-              Q{questionNumber} of {MAX_QUESTIONS}
-            </span>
-            {isSpeaking && (
-              <span className="flex items-center gap-1.5 text-xs text-purple-400 font-medium animate-pulse">
-                <span className="flex gap-0.5 items-center justify-center h-3">
-                  <span className="w-0.5 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: "0.1s" }} />
-                  <span className="w-0.5 h-3 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }} />
-                  <span className="w-0.5 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: "0.3s" }} />
+      {/* Compute status text for hands-free overlay */}
+      {(() => {
+        let statusText = "";
+        if (phase === PHASE.EVALUATING) {
+          statusText = "AI Thinking...";
+        } else if (phase === PHASE.ASKING && isSpeaking) {
+          statusText = "AI Speaking...";
+        } else if (phase === PHASE.ASKING && recorderState === "listening") {
+          statusText = "Listening...";
+        } else if (phase === PHASE.ASKING && recorderState === "transcribing") {
+          statusText = "Transcribing...";
+        }
+
+        return (
+          <div className="space-y-4">
+            {/* AI question */}
+            <div className="rounded-xl border border-purple-500/20 bg-surface p-5 sm:p-6">
+              <div className="mb-3 flex items-center justify-between">
+                <span className="rounded-full bg-purple-500/10 border border-purple-500/20 px-2.5 py-0.5 text-xs font-medium text-purple-400">
+                  Q{questionNumber} of {MAX_QUESTIONS}
                 </span>
-                AI is speaking...
-              </span>
+                {isSpeaking && (
+                  <span className="flex items-center gap-1.5 text-xs text-purple-400 font-medium animate-pulse">
+                    <span className="flex gap-0.5 items-center justify-center h-3">
+                      <span className="w-0.5 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: "0.1s" }} />
+                      <span className="w-0.5 h-3 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }} />
+                      <span className="w-0.5 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: "0.3s" }} />
+                    </span>
+                    AI is speaking...
+                  </span>
+                )}
+              </div>
+              <p className="text-base leading-relaxed text-foreground">
+                {question}
+              </p>
+            </div>
+
+            {isHandsFree ? (
+              <div className="rounded-xl border border-border bg-surface p-8 text-center space-y-6 animate-fade-in">
+                {/* Visual Status Indicator */}
+                <div className="flex justify-center items-center h-24">
+                  {statusText === "AI Speaking..." && (
+                    <div className="flex gap-1.5 items-end justify-center h-12">
+                      <span className="w-1.5 h-6 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: "0.1s" }} />
+                      <span className="w-1.5 h-10 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }} />
+                      <span className="w-1.5 h-12 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: "0.3s" }} />
+                      <span className="w-1.5 h-8 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: "0.4s" }} />
+                      <span className="w-1.5 h-4 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: "0.5s" }} />
+                    </div>
+                  )}
+                  {statusText === "Listening..." && (
+                    <div className="relative">
+                      <div className="absolute inset-0 rounded-full bg-red-500/20 animate-ping" />
+                      <div className="relative rounded-full bg-red-500/10 border border-red-500/30 p-4">
+                        <Mic className="h-8 w-8 text-red-500 animate-pulse" />
+                      </div>
+                    </div>
+                  )}
+                  {(statusText === "Transcribing..." || statusText === "AI Thinking...") && (
+                    <Loader2 className="h-10 w-10 animate-spin text-purple-400" />
+                  )}
+                  {!statusText && (
+                    <Mic className="h-8 w-8 text-muted" />
+                  )}
+                </div>
+
+                {/* Status Label & Instructions */}
+                <div className="space-y-2">
+                  <h2 className="text-xl font-semibold text-foreground tracking-tight">
+                    {statusText || "Waiting..."}
+                  </h2>
+                  <p className="text-xs text-muted max-w-sm mx-auto leading-relaxed">
+                    {statusText === "AI Speaking..." && "Please listen to the interviewer's question."}
+                    {statusText === "Listening..." && "Speak now. Recording will automatically stop after 2.5s of silence."}
+                    {statusText === "Transcribing..." && "Converting your audio response to text..."}
+                    {statusText === "AI Thinking..." && "Evaluating your response and formulating the next topic..."}
+                  </p>
+                </div>
+
+                {/* Error fallback message inside dashboard */}
+                {errorMsg && (
+                  <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg p-2.5 max-w-md mx-auto animate-fade-in">
+                    {errorMsg}
+                  </p>
+                )}
+
+                {/* Control to Switch to Manual */}
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      cancel();
+                      setIsHandsFree(false);
+                    }}
+                    className="text-xs font-medium text-muted hover:text-purple-400 border border-border rounded-lg px-4 py-2 hover:bg-border/30 transition-all cursor-pointer"
+                  >
+                    Switch to manual typing
+                  </button>
+                </div>
+
+                {/* Hidden AudioRecorder */}
+                <div className="hidden">
+                  <AudioRecorder
+                    onTranscriptionComplete={(text) => {
+                      setAnswer(text);
+                      handleSubmitAnswer(text);
+                    }}
+                    onTranscriptionError={(err) => {
+                      console.warn("Hands free recording fail:", err);
+                      setIsHandsFree(false);
+                      setErrorMsg(`Voice input failed: ${err}. Please type your answer manually.`);
+                    }}
+                    onStateChange={(state) => setRecorderState(state)}
+                    autoStart={shouldAutoRecord}
+                    disabled={phase === PHASE.EVALUATING}
+                  />
+                </div>
+              </div>
+            ) : (
+              /* Manual Mode Input */
+              <div className="space-y-4 animate-fade-in">
+                {/* Alert banner */}
+                <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-xs text-yellow-400 font-medium">
+                    <AlertCircle size={14} />
+                    <span>Hands-free voice mode is disabled. You are in manual mode.</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setErrorMsg("");
+                      setIsHandsFree(true);
+                    }}
+                    className="text-xs font-semibold text-purple-400 hover:text-purple-300 transition-colors cursor-pointer"
+                  >
+                    Enable voice mode
+                  </button>
+                </div>
+
+                {/* Answer input */}
+                <div className="rounded-xl border border-border bg-surface p-4 space-y-3">
+                  <textarea
+                    ref={textareaRef}
+                    value={answer}
+                    onChange={(e) => setAnswer(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    disabled={phase === PHASE.EVALUATING}
+                    placeholder="Type your answer here… (Ctrl+Enter to submit)"
+                    rows={6}
+                    className="w-full resize-none bg-transparent text-sm text-foreground placeholder:text-faint outline-none leading-relaxed disabled:opacity-50"
+                  />
+                  <div className="flex items-center justify-between pt-1 border-t border-border">
+                    <div className="flex items-center gap-4">
+                      <span className="text-xs text-faint">
+                        {answer.trim().split(/\s+/).filter(Boolean).length} words
+                      </span>
+                      <AudioRecorder
+                        onTranscriptionComplete={(text) => {
+                          setAnswer((prev) => (prev ? prev + " " + text : text));
+                        }}
+                        onTranscriptionError={(err) => {
+                          setErrorMsg(err);
+                        }}
+                        onStateChange={(state) => setRecorderState(state)}
+                        autoStart={false}
+                        disabled={phase === PHASE.EVALUATING}
+                      />
+                    </div>
+                    <button
+                      onClick={() => handleSubmitAnswer()}
+                      disabled={!answer.trim() || phase === PHASE.EVALUATING}
+                      className="flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      {phase === PHASE.EVALUATING ? (
+                        <>
+                          <Loader2 size={14} className="animate-spin" /> Thinking…
+                        </>
+                      ) : (
+                        <>
+                          <Send size={14} /> Submit
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
-          <p className="text-base leading-relaxed text-foreground">
-            {question}
-          </p>
-        </div>
-
-        {/* Answer input */}
-        <div className="rounded-xl border border-border bg-surface p-4 space-y-3">
-          <textarea
-            ref={textareaRef}
-            value={answer}
-            onChange={(e) => setAnswer(e.target.value)}
-            onKeyDown={handleKeyDown}
-            disabled={phase === PHASE.EVALUATING}
-            placeholder="Type your answer here… (Ctrl+Enter to submit)"
-            rows={6}
-            className="w-full resize-none bg-transparent text-sm text-foreground placeholder:text-faint outline-none leading-relaxed disabled:opacity-50"
-          />
-          <div className="flex items-center justify-between pt-1 border-t border-border">
-            <div className="flex items-center gap-4">
-              <span className="text-xs text-faint">
-                {answer.trim().split(/\s+/).filter(Boolean).length} words
-              </span>
-              <AudioRecorder
-                onTranscriptionComplete={(text) => {
-                  setAnswer((prev) => (prev ? prev + " " + text : text));
-                }}
-                disabled={phase === PHASE.EVALUATING || isSpeaking}
-              />
-            </div>
-            <button
-              onClick={handleSubmitAnswer}
-              disabled={!answer.trim() || phase === PHASE.EVALUATING}
-              className="flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {phase === PHASE.EVALUATING ? (
-                <>
-                  <Loader2 size={14} className="animate-spin" /> Thinking…
-                </>
-              ) : (
-                <>
-                  <Send size={14} /> Submit
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-      </div>
+        );
+      })()}
     </PageContainer>
   );
 }
