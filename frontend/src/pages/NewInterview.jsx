@@ -5,7 +5,7 @@ import PageContainer from "../components/layout/PageContainer";
 import ResumeUploader from "../components/new-interview/ResumeUploader";
 import JobDescriptionInput from "../components/new-interview/JobDescriptionInput";
 import MatchAnalysisCard from "../components/new-interview/MatchAnalysisCard";
-import QuestionList from "../components/new-interview/QuestionList";
+
 import InterviewReadinessCard from "../components/new-interview/InterviewReadinessCard";
 import api from "../lib/api";
 
@@ -16,8 +16,7 @@ export default function NewInterview() {
   const [loadingAnalysis, setLoadingAnalysis] = useState(false);
 
   const [resumeText, setResumeText] = useState("");
-  const [questions, setQuestions] = useState([]);
-  const [loadingQuestions, setLoadingQuestions] = useState(false);
+
   const [loadingStart, setLoadingStart] = useState(false);
 
   // Clear previous session cache when setting up a new interview
@@ -25,26 +24,6 @@ export default function NewInterview() {
     localStorage.removeItem("interview_session_id");
     localStorage.removeItem("interview_first_question");
   }, []);
-
-  async function handleGenerateQuestions() {
-    if (!resumeText || !jobDescription) return;
-
-    try {
-      setLoadingQuestions(true);
-      const response = await api.post("/questions/generate", {
-        resume_text: resumeText,
-        jd_text: jobDescription,
-      });
-
-      setQuestions(response.data.questions || []);
-      console.log(response.data);
-    } catch (error) {
-      console.error(error);
-      alert("Question generation failed");
-    } finally {
-      setLoadingQuestions(false);
-    }
-  }
 
   async function handleStartInterview() {
     if (!analysis) {
@@ -54,9 +33,17 @@ export default function NewInterview() {
 
     try {
       setLoadingStart(true);
+      const savedSettings = JSON.parse(
+        localStorage.getItem("interviewprep-settings") || "{}",
+      );
+      const questionCount = savedSettings.questionCount || 8;
+      const difficulty = savedSettings.difficulty || "Medium";
+
       const response = await api.post("/interview/start", {
         resume_text: resumeText,
         jd_text: jobDescription,
+        question_count: questionCount,
+        difficulty: difficulty,
       });
 
       const { session_id, question } = response.data;
@@ -73,10 +60,6 @@ export default function NewInterview() {
     } finally {
       setLoadingStart(false);
     }
-  }
-
-  function handleRegenerate() {
-    handleGenerateQuestions();
   }
 
   async function handleAnalyze() {
@@ -98,8 +81,6 @@ export default function NewInterview() {
         verdict: response.data.verdict || "",
         recommendations: response.data.recommendations || [],
       });
-
-      await handleGenerateQuestions();
     } catch (error) {
       console.error(error);
       alert("Analysis failed");
@@ -119,8 +100,9 @@ export default function NewInterview() {
           Set up your interview session
         </h1>
         <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-muted text-pretty">
-          Upload your resume and target job description. We&apos;ll analyze the
-          match and generate tailored questions before you begin.
+          We'll analyze your resume against the job description and start an
+          adaptive AI interview that generates questions dynamically based on
+          your responses.
         </p>
       </header>
 
@@ -137,11 +119,7 @@ export default function NewInterview() {
         <button
           onClick={handleAnalyze}
           disabled={
-            loadingAnalysis ||
-            loadingQuestions ||
-            loadingStart ||
-            !resumeText ||
-            !jobDescription
+            loadingAnalysis || loadingStart || !resumeText || !jobDescription
           }
           className="rounded-lg bg-purple-600 px-4 py-2 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 hover:bg-purple-500 transition-colors"
         >
@@ -164,18 +142,11 @@ export default function NewInterview() {
       </div>
 
       <div className="mt-6">
-        <QuestionList questions={questions} loading={loadingQuestions} />
-      </div>
-
-      <div className="mt-6">
         <InterviewReadinessCard
           score={analysis?.score || 0}
-          questionCount={questions.length}
           resumeReady={!!resumeText}
-          onRegenerate={handleRegenerate}
           onStart={handleStartInterview}
           loadingStart={loadingStart}
-          loadingRegenerate={loadingQuestions}
           analysisCompleted={!!analysis}
         />
       </div>

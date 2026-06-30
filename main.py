@@ -9,7 +9,12 @@ app = FastAPI(title="Interview Analyzer API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:5174"
+    ],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -17,7 +22,6 @@ app.add_middleware(
 app.include_router(resume.router, prefix="/api/resume", tags=["resume"])
 app.include_router(questions.router, prefix="/api/questions", tags=["questions"])
 app.include_router(match.router, prefix="/api/match", tags=["match"])
-app.include_router(interview.router, prefix="/api/answer", tags=["answer"])
 @app.get("/")
 def root():
     return {

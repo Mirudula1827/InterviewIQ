@@ -1,7 +1,9 @@
-export default function PageContainer({ children, className = "" }) {
+export default function PageContainer({ children }) {
   return (
-    <div className={`mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10 ${className}`}>
-      {children}
-    </div>
+    <main className="flex-1 overflow-y-auto p-5 sm:p-7 lg:p-8 animate-fade-in">
+      <div className="mx-auto max-w-6xl">
+        {children}
+      </div>
+    </main>
   )
 }

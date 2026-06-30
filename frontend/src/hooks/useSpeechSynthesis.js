@@ -24,7 +24,20 @@ export function useSpeechSynthesis() {
     // Cancel any active speech
     window.speechSynthesis.cancel();
 
+    // Read stored settings
+    const savedSettings = JSON.parse(localStorage.getItem("interviewprep-settings") || "{}");
+    const voiceEnabled = savedSettings.voiceEnabled !== false;
+    const speechRate = savedSettings.speechRate || 1.0;
+
+    if (!voiceEnabled) {
+      if (onEndCallback) {
+        onEndCallback();
+      }
+      return;
+    }
+
     const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = speechRate;
     utteranceRef.current = utterance; // Keep reference to prevent garbage collection bug in Chrome
 
     // Try to load professional English voices

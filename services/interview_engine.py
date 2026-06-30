@@ -2,12 +2,78 @@ import json
 import uuid
 from groq import Groq
 import re
+import os
+import time
+from datetime import datetime
 
 INTERVIEW_SESSIONS = {}
+DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
+DATA_FILE = os.path.join(DATA_DIR, "completed_interviews.json")
+
+def save_completed_interview(session_id, session, report):
+    try:
+        os.makedirs(DATA_DIR, exist_ok=True)
+        
+        interviews = []
+        if os.path.exists(DATA_FILE):
+            try:
+                with open(DATA_FILE, "r", encoding="utf-8") as f:
+                    interviews = json.load(f)
+            except Exception:
+                interviews = []
+        
+        # Prevent writing duplicate interviews
+        if any(item.get("session_id") == session_id for item in interviews):
+            print(f"Session {session_id} already saved. Skipping.")
+            return
+        
+        # Calculate practice time
+        start_time = session.get("start_time", time.time())
+        practice_time = int(time.time() - start_time)
+        
+        # Extract title or job role from JD if possible
+        jd_text = session.get("jd_text", "").strip()
+        role = "AI Mock Interview"
+        if jd_text:
+            # Clean first non-empty line
+            lines = [line.strip() for line in jd_text.split("\n") if line.strip()]
+            if lines:
+                first_line = lines[0]
+                if len(first_line) > 50:
+                    first_line = first_line[:47] + "..."
+                role = first_line
+        
+        history_list = session.get("history", [])
+        response_times = [h.get("response_time", 0) for h in history_list if "response_time" in h]
+        avg_response_time = round(sum(response_times) / len(response_times), 1) if response_times else 0.0
+
+        completed = {
+            "session_id": session_id,
+            "role": role,
+            "date": datetime.utcnow().isoformat() + "Z",
+            "practice_time": practice_time,
+            "overall_score": report.get("overall_score", 5.0),
+            "questions_answered": len(history_list),
+            "hiring_recommendation": report.get("hiring_recommendation", ""),
+            "strengths": report.get("strengths", []),
+            "weaknesses": report.get("weaknesses", []),
+            "suggestions": report.get("suggestions", []),
+            "metrics": report.get("metrics", {}),
+            "history": history_list,
+            "difficulty": session.get("difficulty", "Medium"),
+            "avg_response_time": avg_response_time
+        }
+        
+        interviews.append(completed)
+        with open(DATA_FILE, "w", encoding="utf-8") as f:
+            json.dump(interviews, f, indent=2, ensure_ascii=False)
+    except Exception as e:
+        print(f"Error saving completed interview: {e}")
+
 MAX_QUESTIONS = 8
 
 
-def start_interview(resume_text, jd_text, api_key):
+def start_interview(resume_text, jd_text, api_key, question_count=8, difficulty="Medium"):
     session_id = str(uuid.uuid4())
     client = Groq(api_key=api_key)
 
@@ -17,7 +83,8 @@ def start_interview(resume_text, jd_text, api_key):
             {
                 "role": "system",
                 "content": (
-                    "You are a professional human recruiter and senior technical interviewer conducting a job interview. "
+                    f"You are a professional human recruiter and senior technical interviewer conducting a job interview. "
+                    f"The difficulty level of the interview is {difficulty}. "
                     "You speak naturally, warmly, and professionally. "
                     "You ask ONE question at a time. "
                     "Return only the opening question text, beginning with a brief, natural greeting."
@@ -28,7 +95,8 @@ def start_interview(resume_text, jd_text, api_key):
                 "content": (
                     f"Candidate Resume:\n{resume_text}\n\n"
                     f"Job Description:\n{jd_text}\n\n"
-                    "Start the interview with a brief, natural greeting and a professional opening question based on the candidate's resume/JD. "
+                    f"Start the interview with a brief, natural greeting and a professional opening question "
+                    f"suitable for a {difficulty} level interview based on the candidate's resume/JD. "
                     "For example: 'Hello! Thank you for taking the time to speak with me today. To start off, can you tell me about your experience with...?'"
                 ),
             },
@@ -45,11 +113,15 @@ def start_interview(resume_text, jd_text, api_key):
         "current_question": first_question,
         "history": [],        # list of {question, answer, internal_score}
         "question_count": 1,
+        "max_questions": question_count,
+        "difficulty": difficulty,
         "scores": [],
+        "start_time": time.time(),
+        "last_question_time": time.time(),
     }
     return {"session_id": session_id, "question": first_question}
 
-def _next_question(client, resume_text, jd_text, history, current_question, answer):
+def _next_question(client, resume_text, jd_text, history, current_question, answer, difficulty="Medium"):
     """
     Internally scores the answer, then returns only the next question.
     The score is stored in session but NEVER shown to the user mid-interview.
@@ -65,10 +137,13 @@ def _next_question(client, resume_text, jd_text, history, current_question, answ
             {
                 "role": "system",
                 "content": (
-                    "You are a professional human recruiter and senior technical interviewer. "
-                    "You conduct natural, conversational interviews. "
-                    "You evaluate answers silently and decide on the next reaction and question. "
-                    "You never mention scores, evaluation metrics, strengths, or weaknesses to the candidate. "
+                    f"You are a professional human recruiter and senior technical interviewer. "
+                    f"The difficulty level of the interview is {difficulty}. "
+                    f"You conduct natural, conversational interviews. "
+                    f"You evaluate answers silently and decide on the next reaction and question. "
+                    f"You never mention scores, evaluation metrics, strengths, or weaknesses to the candidate. "
+                    f"Reflect the difficulty level in the complexity of your follow-ups: "
+                    f"Easy means simple conceptual questions, Medium means standard professional depth, Hard means deep system design, edge cases, and architectural tradeoffs. "
                     "You respond ONLY with a JSON object containing 'internal_score' and 'next_question'. "
                     "No markdown, no explanation."
                 ),
@@ -227,7 +302,7 @@ def _final_report(client, resume_text, jd_text, history, scores):
     }
 
 
-def _score_answer(client, resume_text, jd_text, history, current_question, answer):
+def _score_answer(client, resume_text, jd_text, history, current_question, answer, difficulty="Medium"):
     """
     Scores the final answer from 1 to 10 based on candidate response.
     """
@@ -255,7 +330,8 @@ def _score_answer(client, resume_text, jd_text, history, current_question, answe
                     f"Interview so far:\n{history_text}\n\n"
                     f"You just asked: {current_question}\n"
                     f"Candidate answered: {answer}\n\n"
-                    "Your task: Score this answer from 1 to 10 based on correctness, depth, and relevance.\n\n"
+                    f"Your task: Score this answer from 1 to 10 based on correctness, depth, and relevance, "
+                    f"calibrated for a {difficulty} level interview (score strictly for Hard difficulty, normally for Medium, and kindly for Easy).\n\n"
                     "Return ONLY this JSON:\n"
                     '{"score": 7}'
                 ),
@@ -282,16 +358,24 @@ def evaluate_answer(session_id, answer, api_key):
     jd_text = session["jd_text"]
     current_question = session["current_question"]
     client = Groq(api_key=api_key)
+    
+    # Calculate response time
+    elapsed = int(time.time() - session.get("last_question_time", time.time()))
+    session["last_question_time"] = time.time()
+
+    difficulty = session.get("difficulty", "Medium")
+    max_questions = session.get("max_questions", 8)
 
     # Last question — generate final report
-    if session["question_count"] >= MAX_QUESTIONS:
+    if session["question_count"] >= max_questions:
         # Store final answer first
-        session["history"].append({"question": current_question, "answer": answer})
+        session["history"].append({"question": current_question, "answer": answer, "response_time": elapsed})
         
         # Score the final answer using LLM instead of a hardcoded 5
         score = _score_answer(
             client, resume_text, jd_text,
-            session["history"][:-1], current_question, answer
+            session["history"][:-1], current_question, answer,
+            difficulty
         )
         session["scores"].append(score)
 
@@ -299,9 +383,16 @@ def evaluate_answer(session_id, answer, api_key):
             client, resume_text, jd_text,
             session["history"], session["scores"]
         )
+        
+        # Save report to persistent local JSON storage
+        save_completed_interview(session_id, session, report)
+        
+        # Clean up session from active sessions
+        INTERVIEW_SESSIONS.pop(session_id, None)
+
         return {
             "interview_completed": True,
-            "questions_answered": session["question_count"],
+            "questions_answered": len(session.get("history", [])),
             **report,
         }
 
@@ -309,11 +400,12 @@ def evaluate_answer(session_id, answer, api_key):
     # Mid-interview — get next question silently
     score, next_question = _next_question(
         client, resume_text, jd_text,
-        session["history"], current_question, answer
+        session["history"], current_question, answer,
+        difficulty
     )
 
     # Store Q&A + internal score
-    session["history"].append({"question": current_question, "answer": answer})
+    session["history"].append({"question": current_question, "answer": answer, "response_time": elapsed})
     session["scores"].append(score)
     session["current_question"] = next_question
     session["question_count"] += 1

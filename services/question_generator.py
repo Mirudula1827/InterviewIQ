@@ -1,6 +1,6 @@
 from groq import Groq
 
-def generate_questions(resume_text, jd_input, api_key):
+def generate_questions(resume_text, jd_input, api_key, difficulty="Medium"):
     client = Groq(api_key=api_key)
     
     response = client.chat.completions.create(
@@ -12,6 +12,7 @@ def generate_questions(resume_text, jd_input, api_key):
 You are an experienced technical interviewer.
 
 Generate exactly 8 realistic interview questions using BOTH the candidate's resume and the job description.
+The difficulty of the questions must be {difficulty} level.
 
 Candidate Resume:
 {resume_text}

@@ -25,12 +25,18 @@ export default function AudioRecorder({
   const animationFrameRef = useRef(null);
   const recordingActiveRef = useRef(false);
 
-  // Handle auto-starting recording
+  // Handle auto-starting/stopping recording
   useEffect(() => {
-    if (autoStart && !isRecording && !isTranscribing && !disabled) {
-      startRecording();
+    if (autoStart && !disabled) {
+      if (!isRecording && !isTranscribing) {
+        startRecording();
+      }
+    } else {
+      if (isRecording) {
+        stopRecording();
+      }
     }
-  }, [autoStart]);
+  }, [autoStart, disabled]);
 
   // Clean up on component unmount
   useEffect(() => {
@@ -121,7 +127,7 @@ export default function AudioRecorder({
 
       let lastSpeechTime = Date.now();
       let hasSpoken = false;
-      const silenceDuration = 2500; // Stop after 2.5 seconds of silence
+      const silenceDuration = 3000; // Stop after 3 seconds of silence
       const initialSpeechTimeout = 10000; // Timeout after 10 seconds if no speaking starts
       const startTime = Date.now();
 
@@ -138,8 +144,8 @@ export default function AudioRecorder({
         }
         const averageVolume = sum / bufferLength;
 
-        // Threshold of volume representing active speaking
-        const threshold = 12;
+        // Threshold of volume representing active speaking (calibrated to be more sensitive)
+        const threshold = 8;
 
         if (averageVolume > threshold) {
           hasSpoken = true;
@@ -204,8 +210,13 @@ export default function AudioRecorder({
     }
     recordingActiveRef.current = false;
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
-      mediaRecorderRef.current.stop();
+      try {
+        mediaRecorderRef.current.stop();
+      } catch (err) {
+        console.warn("Error stopping media recorder:", err);
+      }
     }
+    stopTracks();
     setIsRecording(false);
   };
 

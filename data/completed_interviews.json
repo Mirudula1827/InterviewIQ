@@ -1,0 +1,301 @@
+[
+  {
+    "session_id": "c3f87532-6a7c-47ea-a9ff-3559f0f9b69b",
+    "role": "Software Engineer (Backend)",
+    "date": "2026-06-25T14:30:00.000Z",
+    "practice_time": 480,
+    "overall_score": 8.2,
+    "questions_answered": 8,
+    "hiring_recommendation": "Strong Hire — Demonstrated exceptional database design optimization skills and clear concurrency management principles.",
+    "strengths": [
+      "Excellent understanding of database indexing strategies and query optimizations.",
+      "Articulated concurrency controls (locks, semaphores, transactions) with precise Python examples.",
+      "Clear explanation of REST vs gRPC API trade-offs."
+    ],
+    "weaknesses": [
+      "Could have elaborated more on distributed tracing methods for logging.",
+      "Minor oversight in memory handling under peak cache eviction events."
+    ],
+    "suggestions": [
+      "Review Redis cache eviction policies (LRU/LFU) to optimize high-throughput caching.",
+      "Read about OpenTelemetry standards for tracing API requests through multi-service backend layers."
+    ],
+    "metrics": {
+      "technical_knowledge": {
+        "score": 8.5,
+        "note": "Exhibited senior-level knowledge of backend system design and databases."
+      },
+      "problem_solving": {
+        "score": 8.0,
+        "note": "Reasoned logically through multi-threading concurrency issues and scalability limits."
+      },
+      "communication": {
+        "score": 8.0,
+        "note": "Spoke clearly and structured technical explanations logically."
+      }
+    },
+    "history": [
+      {
+        "question": "To start off, can you explain your experience designing database schemas for high-concurrency systems?",
+        "answer": "Yes, I've designed several schemas utilizing PostgreSQL and Redis. For high concurrency, I focus on proper indexing, denormalization where appropriate to avoid heavy joins, and using Redis for caching hot queries to reduce read pressure on primary databases."
+      },
+      {
+        "question": "That's a solid foundation. How do you handle write conflicts when multiple transactions try to update the same row simultaneously?",
+        "answer": "We can use either optimistic concurrency control, checking a version column during update, or pessimistic locking (SELECT FOR UPDATE). For high write rates, optimistic locking is usually faster as it avoids holding database lock blocks."
+      }
+    ]
+  },
+  {
+    "session_id": "8b7e2831-29cf-4cb5-aa38-95d88661ef42",
+    "role": "Data Scientist",
+    "date": "2026-06-28T09:15:00.000Z",
+    "practice_time": 620,
+    "overall_score": 7.4,
+    "questions_answered": 8,
+    "hiring_recommendation": "Lean Hire — Solid statistical and modeling fundamentals, but needs more familiarity with cloud deployment pipelines.",
+    "strengths": [
+      "Deep understanding of classical ML models, feature engineering, and regularization concepts.",
+      "Honest assessment of model drift and data validation checks in production."
+    ],
+    "weaknesses": [
+      "Struggled slightly when asked to design a real-time feature engineering pipeline.",
+      "Less experience with Kubernetes-based model serving tools (like KFServing/KServe)."
+    ],
+    "suggestions": [
+      "Study real-time stream processing tools like Apache Flink or Spark Streaming for feature engineering.",
+      "Complete a tutorial on deploying containerized ML models using Docker and Kubernetes."
+    ],
+    "metrics": {
+      "technical_knowledge": {
+        "score": 7.5,
+        "note": "Strong machine learning math, but gaps in production MLOps engineering."
+      },
+      "problem_solving": {
+        "score": 7.0,
+        "note": "Found reasonable workarounds for dataset imbalance, though missed some pipeline optimizations."
+      },
+      "communication": {
+        "score": 7.5,
+        "note": "Explained metrics clearly, but structure could be more concise on architecture questions."
+      }
+    },
+    "history": [
+      {
+        "question": "Can you describe how you deal with class imbalance in binary classification tasks?",
+        "answer": "I typically look at SMOTE for oversampling the minority class, or random undersampling. More importantly, I adjust the model loss weights (class_weight='balanced') and evaluate using Precision-Recall curves instead of pure accuracy."
+      },
+      {
+        "question": "Good point on Precision-Recall curves. How would you design a system that checks for model performance drift in production?",
+        "answer": "I would set up a monitoring job that compares the distribution of incoming features to the training distribution using statistical tests like the Kolmogorov-Smirnov test. If drift is detected, we log an alert for retraining."
+      }
+    ]
+  },
+  {
+    "session_id": "d04a8bc3-3b1a-4d2d-88f2-2ea90bf39a1a",
+    "role": "Frontend Developer (React)",
+    "date": "2026-06-30T10:00:00.000Z",
+    "practice_time": 540,
+    "overall_score": 8.8,
+    "questions_answered": 8,
+    "hiring_recommendation": "Strong Hire — Showed masterful understanding of React state patterns, performance tuning, and premium visual layout design.",
+    "strengths": [
+      "In-depth knowledge of React 19 fiber rendering, reconciliation, and hooks.",
+      "Clear explanation of code-splitting, lazy loading, and web vitals optimization.",
+      "Strong aesthetic sensibility and attention to responsive CSS layouts."
+    ],
+    "weaknesses": [
+      "Could have discussed server-side rendering (SSR) trade-offs in Next.js in slightly more detail."
+    ],
+    "suggestions": [
+      "Explore React Server Components (RSCs) and server actions in Next.js to leverage full-stack React architectures."
+    ],
+    "metrics": {
+      "technical_knowledge": {
+        "score": 9.0,
+        "note": "Exceptional frontend expertise, especially React internals and performance APIs."
+      },
+      "problem_solving": {
+        "score": 8.5,
+        "note": "Designed a clean, decoupled client state architecture under pressure."
+      },
+      "communication": {
+        "score": 9.0,
+        "note": "Very engaging communicator; easily simplified complex browser rendering concepts."
+      }
+    },
+    "history": [
+      {
+        "question": "Welcome! To start off, how do you optimize performance in a React application with heavy data-rendering requirements?",
+        "answer": "First, I analyze rendering behaviors using React DevTools. I look into virtualizing large lists using libraries like react-window. I use memoization hooks (useMemo, useCallback) selectively for expensive calculations or child components, and implement code-splitting at the router level."
+      },
+      {
+        "question": "Excellent. Can you explain the difference between the virtual DOM and the shadow DOM?",
+        "answer": "Yes. The virtual DOM is a lightweight JavaScript representation of the real DOM created by frameworks like React to reconcile UI changes efficiently. The shadow DOM is a native browser API used in Web Components to encapsulate CSS and HTML structure, hiding details from the global document scope."
+      }
+    ]
+  },
+  {
+    "session_id": "b4b0f946-464e-4b84-bafc-5b42affe76b6",
+    "role": "Based on this resume, the strongest fit is a **...",
+    "date": "2026-06-30T20:08:26.652832Z",
+    "practice_time": 359,
+    "overall_score": 6.1,
+    "questions_answered": 8,
+    "hiring_recommendation": "Lean Hire — strong fundamentals but gaps in system design.",
+    "strengths": [
+      "Effectively explained the implementation of custom hardware components in the project to perform electrical parameter analysis.",
+      "Demonstrated an understanding of async functions, optimistic UI updates, and response data normalization for handling data and fallbacks.",
+      "Showcased experience with integrating backend aspects of the project and handling secure electrical parameter analysis."
+    ],
+    "weaknesses": [
+      "Failed to remember specific details about the electrical parameter analysis in a previous project, and had to ask for clarification.",
+      "Struggled to explain technical concepts such as system design fundamentals and backend development.",
+      "Was unable to provide clear answers to several questions, instead choosing to 'leave some darkness or provide unclear information'."
+    ],
+    "suggestions": [
+      "Seek to improve technical documentation skills to better retain information about past projects.",
+      "Work on developing clear explanations for technical concepts to improve communication with colleagues.",
+      "Practice answering behavioral and technical questions in a more structured and transparent manner."
+    ],
+    "metrics": {
+      "technical_knowledge": {
+        "score": 6.1,
+        "note": "While the candidate showed good knowledge of certain technical concepts, they struggled to explain more complex ideas and concepts, indicating a potential gap in overall technical understanding."
+      },
+      "problem_solving": {
+        "score": 6.1,
+        "note": "The candidate demonstrated some ability to design and implement technical solutions, but struggled to articulate thought processes and approaches to problem-solving."
+      },
+      "communication": {
+        "score": 6.1,
+        "note": "The candidate's communication skills were variable, with some clear explanations and others that were unclear or difficult to follow."
+      }
+    },
+    "history": [
+      {
+        "question": "Hello, D Mirudull! It's great to have you here today. Let's dive right into the conversation - Can you walk me through your experience with YOLO object detection models and how you integrated them into the Counterfeit IC Detection Application you worked on?",
+        "answer": "It was basically for a half a ton, I did. And it was a hard project, that is, it was not a software related project. It was a hardware project, it was integrated with IoT. We made it as a team and it was basically to determine the, you know, how good the chips are. Yeah.",
+        "response_time": 62
+      },
+      {
+        "question": "So, you mentioned it was a team effort. What was your role or specific contributions to the project?",
+        "answer": "Back in the level up, so because I was most specialized with backing, I handled the backing",
+        "response_time": 22
+      },
+      {
+        "question": "It seems you handled the backend aspects of the project, that's great experience to have. Can you walk me through how you ensured the electrical parameter analysis was integrated securely with the AI-powered dual YOLO object detection models?",
+        "answer": "Yes, sure. So, I don't remember exactly, but I forgot.",
+        "response_time": 41
+      },
+      {
+        "question": "That's not what we've discussed so far. It seems there's a disconnect in your understanding of the project, could you tell me specifically which electrical parameter analysis you forgot to incorporate?",
+        "answer": "It's a bit more like a complete list of critical piece of our project. So it was power quality parameters, dynamic and transition behavior thermal loss parameters.",
+        "response_time": 42
+      },
+      {
+        "question": "That's helpful clarification. How did you implement the custom hardware components in the project to perform electrical parameter analysis, such as voltage, current, and resistance?",
+        "answer": "Actually the port parameters are securely using digital hardware. That's there are few things like the old age measurement, current measurement and resistance measurement. The custom component wrote these conditioned analog signals through a multiplex ADC sequence.",
+        "response_time": 42
+      },
+      {
+        "question": "That's a good insight into how you implemented the analog signals. Can you walk me through your experience with integrating REST APIs with frontend applications, specifically in the context of the Pedro Milestone Bot project you led?",
+        "answer": "Yes, sure, again. So when it comes to the SAP I is I. The core integration MOOC was basically using async function and the architectural pillars were optimistic UI updates, response data normalization, cold fallback and rate limiting.",
+        "response_time": 60
+      },
+      {
+        "question": "That's an interesting approach with async functions, optimistic UI updates, and response data normalization. Can you tell me more about how you handled error handling and fallbacks in your design, and what tools or mechanisms you used to enforce rate limiting?",
+        "answer": "Yeah, so about the optimistic UI updates and response data normalization for handling data and fallbacks, we can approach global error boundaries and axioms in the zip task and graceful degraded states.",
+        "response_time": 51
+      },
+      {
+        "question": "That's a creative take on using async functions for error handling, but can you walk me through how you ensured that the UI updates remained consistent across different browsers and devices, given the optimistic UI approach you mentioned?",
+        "answer": "Sorry, but I will leave some dark.",
+        "response_time": 31
+      }
+    ],
+    "difficulty": "Medium",
+    "avg_response_time": 43.9
+  },
+  {
+    "session_id": "2d94fb80-1fa1-4dcb-b3b8-c084e7f8df06",
+    "role": "Machine Learning Intern",
+    "date": "2026-06-30T20:42:47.573881Z",
+    "practice_time": 327,
+    "overall_score": 6.4,
+    "questions_answered": 8,
+    "hiring_recommendation": "Lean Hire — strong fundamentals but gaps in system design.",
+    "strengths": [
+      "Candidate demonstrated strong feature engineering skills, considering the importance of feature removal for class imbalance and per-prediction interpretability.",
+      "Candidate effectively implemented SHAP to provide per-prediction interpretability in the Credit Card Fraud Detection System, making predictions more user-friendly and interpretable.",
+      "Candidate mentioned using SMOTE to address class imbalance issues, which was a good approach for its simplicity and effectiveness."
+    ],
+    "weaknesses": [
+      "Candidate was uncertain about the specifics of implementing SMOTE, including the number of nearest neighbors and the ratio for SMOTE to use.",
+      "Candidate did not discuss techniques to prevent overfitting in the model beyond SMOTE.",
+      "Candidate struggled to recall details about SHAP implementation and integration with the Streamlit dashboard, indicating potential gaps in documentation or knowledge retention."
+    ],
+    "suggestions": [
+      "Consider documenting experiments and implementation details in more detail to improve recall and facilitate knowledge retention.",
+      "Explore techniques to prevent overfitting in the model, such as regularization or early stopping, to enhance robustness and generalizability.",
+      "Practice summarizing and recalling details about complex implementations, such as SHAP integration with the Streamlit dashboard, to improve communication and problem-solving skills."
+    ],
+    "metrics": {
+      "technical_knowledge": {
+        "score": 8.0,
+        "note": "Strong understanding of machine learning fundamentals and concepts, including SMOTE, SHAP, and feature engineering."
+      },
+      "problem_solving": {
+        "score": 6.5,
+        "note": "Candidate demonstrated problem-solving skills, but uncertainty and gaps in implementation details hindered overall problem-solving performance."
+      },
+      "communication": {
+        "score": 7.0,
+        "note": "Candidate struggled with recalling specific implementation details, but effectively explained the purpose and benefits of SHAP and SMOTE."
+      }
+    },
+    "history": [
+      {
+        "question": "Hello! I appreciate you taking the time to chat with me today. To get started, can you walk me through your experience with designing and implementing machine learning pipelines, such as the one you showcased in your project, \"Credit Card Fraud Detection System\"?",
+        "answer": "So basically my credit card for detection system is a full ML5 line where I have worked from data collection, data pre-processing and collecting the data and cleaning it, processing it and handling null values to everything. Also feature importance.",
+        "response_time": 70
+      },
+      {
+        "question": "That makes sense. You had to handle missing values and feature importance, but my next question is, did you consider implementing any techniques to prevent overfitting in the model, especially given the class imbalance issue with credit card transactions?",
+        "answer": "small technique",
+        "response_time": 26
+      },
+      {
+        "question": "It sounds like you considered using SMOTE to address the class imbalance issue, which was a good approach. Can you explain how you decided on the number of nearest neighbors and the ratio for SMOTE to use in this project?",
+        "answer": "I don't remember exactly.",
+        "response_time": 22
+      },
+      {
+        "question": "That's a good point, although it seems like you're uncertain about the specifics. Did you explore any other techniques to address the class imbalance issue, or was SMOTE the chosen solution for its simplicity and effectiveness?",
+        "answer": "It seems to only smote because of its simplicity and effectiveness.",
+        "response_time": 31
+      },
+      {
+        "question": "That's an interesting approach. How did you handle feature engineering in the Credit Card Fraud Detection System, especially considering the need for per-prediction interpretability with SHAP?",
+        "answer": "Is feature engineering was most important in this because of class and balance problem with the data set used in this project? As well for prediction and predictability was really important because not every feature contributes equally to the output. So removing the features which did not consent for which did not contribute was really important.",
+        "response_time": 54
+      },
+      {
+        "question": "That's a good point about the importance of feature engineering, especially considering the class imbalance issue. Can you walk me through how you used SHAP to provide per-prediction interpretability in the Credit Card Fraud Detection System, and what insights you discovered from it?",
+        "answer": "Remember very exactly.",
+        "response_time": 25
+      },
+      {
+        "question": "That's a good point about remembering the details. It sounds like you implemented SHAP to provide per-prediction interpretability in the Credit Card Fraud Detection System. Can you walk me through how you integrated SHAP with the Streamlit dashboard for the real-time fraud scoring and explanation?",
+        "answer": "The shaft was very easy to implement.",
+        "response_time": 32
+      },
+      {
+        "question": "That's a good point about the ease of implementation. Can you walk me through how you handled integrating the real-time fraud scoring and explanation into the Streamlit dashboard while maintaining a user-friendly interface?",
+        "answer": "Yeah, you know, just not just by displaying or showing the user about the prediction. We also gave a space for the streamlet interface to display the details on how each feature like the amount that contributed in the prediction so that it can be, you know, using Shapet can be very user friendly, also, uh, interpretable.",
+        "response_time": 61
+      }
+    ],
+    "difficulty": "Medium",
+    "avg_response_time": 40.1
+  }
+]

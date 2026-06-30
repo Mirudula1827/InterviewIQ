@@ -25,12 +25,9 @@ function Recap({ icon: Icon, label, value }) {
 
 export default function InterviewReadinessCard({
   score,
-  questionCount,
   resumeReady,
-  onRegenerate,
   onStart,
   loadingStart,
-  loadingRegenerate,
   analysisCompleted,
 }) {
   return (
@@ -49,15 +46,8 @@ export default function InterviewReadinessCard({
       </div>
 
       <div className="p-5 sm:p-6">
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2">
           <Recap icon={Gauge} label="Match Score" value={`${score}%`} />
-          <Recap
-            icon={ListChecks}
-            label="Questions"
-            value={
-              loadingRegenerate ? "Generating..." : `${questionCount} prepared`
-            }
-          />
           <Recap
             icon={FileCheck2}
             label="Resume"
@@ -69,7 +59,7 @@ export default function InterviewReadinessCard({
           <button
             type="button"
             onClick={onStart}
-            disabled={!analysisCompleted || loadingStart || loadingRegenerate}
+            disabled={!analysisCompleted || loadingStart}
             className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-(--color-accent) px-4 py-3 text-sm font-semibold text-white outline-none transition-colors hover:bg-(--color-accent-hover) focus-visible:ring-2 focus-visible:ring-(--color-accent) focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loadingStart ? (
@@ -81,24 +71,6 @@ export default function InterviewReadinessCard({
               <>
                 <Rocket size={16} />
                 Start Adaptive Interview
-              </>
-            )}
-          </button>
-          <button
-            type="button"
-            onClick={onRegenerate}
-            disabled={!analysisCompleted || loadingRegenerate || loadingStart}
-            className="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-surface px-4 py-3 text-sm font-semibold text-muted outline-none transition-colors hover:bg-surface-hover hover:text-foreground focus-visible:ring-2 focus-visible:ring-(--color-accent) disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loadingRegenerate ? (
-              <>
-                <Loader2 size={16} className="animate-spin" />
-                Regenerating...
-              </>
-            ) : (
-              <>
-                <RefreshCw size={16} />
-                Regenerate Questions
               </>
             )}
           </button>

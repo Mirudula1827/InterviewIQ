@@ -10,6 +10,7 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 class QuestionRequest(BaseModel):
     resume_text: str
     jd_text: str
+    difficulty: str = "Medium"
 
 def parse_questions(raw: str) -> list[str]:
     lines = raw.strip().split("\n")
@@ -26,6 +27,6 @@ async def generate(req: QuestionRequest):
     if not req.resume_text or not req.jd_text:
         raise HTTPException(status_code=400, detail="resume_text and jd_text are required")
     
-    raw = generate_questions(req.resume_text, req.jd_text, GROQ_API_KEY)
+    raw = generate_questions(req.resume_text, req.jd_text, GROQ_API_KEY, req.difficulty)
     questions = parse_questions(raw)
     return {"questions": questions}

@@ -7,3 +7,4 @@ groq
 openai-whisper
 scikit-learn
 python-dotenv
+sentence-transformers

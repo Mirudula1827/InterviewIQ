@@ -2,7 +2,6 @@ import { ListChecks, Loader2 } from "lucide-react";
 import QuestionCard from "./QuestionCard";
 
 export default function QuestionList({ questions, loading }) {
-  // TODO: Connect to POST /api/questions/generate
   return (
     <section className="rounded-xl border border-border bg-surface p-5 sm:p-6">
       <div className="mb-4 flex items-center gap-2">
